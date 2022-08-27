@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace EPG.Models
+namespace EpgApp.apps.Epg.Models
 {
-    internal class Config
+    public class Config
     {
         public int? RefreshrateInSeconds { get; set; }
         public IEnumerable<DataProvider>? Dataproviders { get; set; }

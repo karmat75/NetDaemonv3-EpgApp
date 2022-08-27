@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EPG.Models
+namespace EpgApp.apps.Epg.Models
 {
-    internal class DataProvider
+    public class DataProvider
     {
         public string? Fullname { get; set; }
         public IEnumerable<string>? Stations { get; set; }
