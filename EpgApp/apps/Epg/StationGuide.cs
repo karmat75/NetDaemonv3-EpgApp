@@ -2,6 +2,7 @@
 using EpgApp.apps.Epg.Services;
 using NetDaemon.Extensions.MqttEntityManager;
 using NetDaemon.Extensions.Scheduler;
+using NetDaemon.HassModel.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Concurrency;
@@ -20,6 +21,7 @@ namespace EpgApp.apps.Epg
         private readonly IEnumerable<string> _guideRefreshTimes;
         private readonly int _refreshrateInSeconds;
         private readonly IHaContext _haContext;
+        private readonly IAppConfig<Config> _config;
 
         private readonly Regex _timeRegex = new Regex(@"^([0-1]?[0-9]|2[0-3]):([0-5][0-9])(?::([0-5][0-9]))?$");  // 09:30 / 9:30 / 09:30:00 / 9:30:00
         private IEnumerable<Show> _guide;
@@ -37,6 +39,8 @@ namespace EpgApp.apps.Epg
             _guideRefreshTimes = stationGuideArguments.GuideRefreshTimes;
             _refreshrateInSeconds = stationGuideArguments.RefreshrateInSeconds;
             _haContext = stationGuideArguments.HomeAssistantContext;
+            _entityManager = stationGuideArguments.MqttEntityManager;
+            _config = stationGuideArguments.Config;
 
             _instanceNumber = _instanceCounter++;
         }
@@ -52,10 +56,10 @@ namespace EpgApp.apps.Epg
                 {
                     continue;
                 }
-                _scheduler.ScheduleCron($"{time[1]} {time[0]} * * *", async () => await RefreshGuideAsync());
+                _= _scheduler.ScheduleCron($"{time[1]} {time[0]} * * *", async () => await RefreshGuideAsync());
             }
 
-            _scheduler.Schedule(TimeSpan.FromSeconds(_refreshrateInSeconds), async () => await GetCurrentShowAndSetSensorAsync());
+            //_= _scheduler.Schedule(TimeSpan.FromSeconds(_refreshrateInSeconds), async () => await GetCurrentShowAndSetSensorAsync());
         }
 
         public async Task RefreshGuideAsync()
@@ -94,6 +98,11 @@ namespace EpgApp.apps.Epg
             return await _dataProviderService.GetDescriptionAsMarkdown(show);
         }
 
+        public string GetLink(Show show)
+        {
+            return _dataProviderService.GetLink(show);
+        }
+
         private async Task GetCurrentShowAndSetSensorAsync()
         {
             var now = DateTime.Now;
@@ -101,7 +110,7 @@ namespace EpgApp.apps.Epg
             var upcomingShow = GetUpcomingShow(now);
 
             var sensorName = GetSensorName(_station);
-            await CreateSensorAsync(sensorName);
+            await CreateSensorIfNeededAsync(sensorName);
 
             // Clear Sensor, if no current show found
             if (currentShow == null)
@@ -110,6 +119,8 @@ namespace EpgApp.apps.Epg
                 await ClearSensor(sensorName);
                 return;
             }
+
+            var state = GetState(sensorName);
 
             if (_lastShow == null || !_lastShow.Title.Equals(currentShow.Title, StringComparison.Ordinal) || !_lastShow.Start.Equals(currentShow.Start))
             {
@@ -124,12 +135,13 @@ namespace EpgApp.apps.Epg
                     Genre = currentShow.Category,
                     Upcoming = upcomingShow?.Title ?? string.Empty,
                     DataProvider = _dataProviderService.ProviderName,
-                    Description = "loading...",
+                    Description = await GetDescription(currentShow),
+                    Link = GetLink(currentShow),
                 };
 
                 await _entityManager.SetAttributesAsync(sensorName, sensorAttributes).ConfigureAwait(false);
 
-                var state = _haContext.GetState(sensorName);
+                state = GetState(sensorName);
 
                 _logger.LogInformation($@"{_dataProviderService.ProviderName} / {_station}: TV Show ""{state?.State}"" started at {currentShow.Start.ToShortTimeString()}");
 
@@ -151,33 +163,63 @@ namespace EpgApp.apps.Epg
                     _lastShow = null;  // make sure, sensor will be set at next run again.
                     _logger.LogDebug($@"{_dataProviderService.ProviderName} / {_station}: TV Show ""{state?.State}"" need to set properties again.");
                 }
-
-                var description = await GetDescription(currentShow);
-                if (state?.Attributes != null)
-                {
-                    sensorAttributes.Description = description;
-                    await _entityManager.SetAttributesAsync(sensorName, sensorAttributes);
-                    state = _haContext.GetState(sensorName);
-                    _logger.LogInformation($@"{_dataProviderService.ProviderName} / {_station}: description for ""{state?.State}"" loaded");
-                }
             }
 
+            state = GetState(sensorName);
+            if(state != null)
+            {
+                await _entityManager.SetAvailabilityAsync(sensorName, "up").ConfigureAwait(false);
+                int currentDuration = 0;
+                if(currentShow.DurationInPercent > 0)
+                {
+                    currentDuration = (int)((currentShow.DurationInPercent ?? 0.0) * 100);
+                }
+
+                await _entityManager.SetStateAsync(sensorName, $"{currentDuration}").ConfigureAwait(false);
+            }
+            
+
             _logger.LogDebug($@"{_dataProviderService.ProviderName} / {_station}: ""{currentShow.Title}"" running since {currentShow?.Start.ToShortTimeString()} {currentShow?.Title ?? "-"} ({currentShow?.DurationInPercent:P1})");
+            _ = _scheduler.Schedule(TimeSpan.FromSeconds(_refreshrateInSeconds), async () => await GetCurrentShowAndSetSensorAsync());
+
         }
 
-        private async Task CreateSensorAsync(string sensorName)
+        private async Task CreateSensorIfNeededAsync(string sensorName)
         {
-            var entityCreateOptions = new EntityCreationOptions
-            {
-                Persist = false
-            };
+            var sensor = _haContext.Entity(sensorName);
 
-            await _entityManager.CreateAsync(sensorName, entityCreateOptions).ConfigureAwait(false);
+            if (sensor.EntityState == null)
+            {
+                var entityCreateOptions = new EntityCreationOptions
+                {
+                    Persist = false,
+                    PayloadAvailable = "up",
+                    PayloadNotAvailable = "down",                    
+                };
+
+                var additonalConfig = new
+                {
+                    unit_of_measurement = "%"
+                };
+
+                await _entityManager.CreateAsync(sensorName, entityCreateOptions, additonalConfig).ConfigureAwait(false);
+            }
         }
 
         private string GetSensorName(string station)
         {
-            return $"sensor.epg_{_dataProviderService.ProviderName.ToSimple()}_{station.ToSimple()}";
+            var prefix = "epg";
+
+            if (!string.IsNullOrEmpty(_config.Value.SensorPrefix))
+            {
+                prefix = _config.Value.SensorPrefix.ToSimple();
+            }
+            return $"sensor.{prefix}_{_dataProviderService.ProviderName.ToSimple()}_{station.ToSimple()}";
+        }
+
+        private EntityState? GetState(string sensorname)
+        {
+            return _haContext.GetState(sensorname);
         }
 
         private async Task ClearSensor(string sensorName)

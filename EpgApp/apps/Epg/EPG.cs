@@ -1,11 +1,11 @@
 ﻿using EpgApp.apps.Epg.Models;
 using EpgApp.apps.Epg.Services;
+using Microsoft.Extensions.Hosting;
 using NetDaemon.Extensions.MqttEntityManager;
-using System;
+using NetDaemon.HassModel.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Concurrency;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +19,7 @@ namespace EpgApp.apps.Epg
         private readonly IMqttEntityManager _entityManager;
         private readonly IScheduler _scheduler;
         private readonly IHaContext _haContext;
+        private readonly IHostApplicationLifetime _liveTime;
 
         private List<DataProvider> _dataProviders;
         private int _refreshrateInSeconds;
@@ -29,13 +30,15 @@ namespace EpgApp.apps.Epg
             IAppConfig<Config> appConfig,
             IMqttEntityManager mqttEntityManager,
             IScheduler scheduler,
-            IHaContext haContext)
+            IHaContext haContext,
+            IHostApplicationLifetime liveTime)
         {
             _logger = appLogger;
             _config = appConfig;
             _entityManager = mqttEntityManager;
             _scheduler = scheduler;
             _haContext = haContext;
+            _liveTime = liveTime;
         }
 
         public async Task InitializeAsync(CancellationToken cancellationToken)
@@ -44,14 +47,27 @@ namespace EpgApp.apps.Epg
             SetRefreshrateInSeconds();
             InitialisedefaultGuideRefreshTimes();
 
-            await RunApplicationAsync(cancellationToken);
+            if(_config.Value.CleanupSensorsOnStartup != null && _config.Value.CleanupSensorsOnStartup.Value)
+            {
+                _logger.LogInformation("Sensor cleanup on start is enabled. All sensors will be removed and recreated if nessesary.");
+                await RemoveAllSensorsOnStartup();
+            }
+
+            if(_config.Value.OnlyCleanupAndEnd == null || !_config.Value.OnlyCleanupAndEnd.Value)
+            {
+                await RunApplicationAsync(cancellationToken);
+            }
+            else
+            {
+                _logger.LogInformation("Application is configured to only cleanup sensors and end.");
+                Exit();
+            }
         }
-
-
 
         public async ValueTask DisposeAsync()
         {
-            throw new NotImplementedException();
+            await SetAvailabilityForAllSensorsToDown();
+            return;
         }
 
         private async Task RunApplicationAsync(CancellationToken cancellationToken)
@@ -97,6 +113,7 @@ namespace EpgApp.apps.Epg
                         GuideRefreshTimes = dataProvider.RefreshTimes,
                         RefreshrateInSeconds = _refreshrateInSeconds,
                         HomeAssistantContext = _haContext,
+                        Config = _config,
                     };
 
                     var stationGuide = new StationGuide(stationGuideArguments);
@@ -154,6 +171,57 @@ namespace EpgApp.apps.Epg
         private void InitialisedefaultGuideRefreshTimes()
         {
             _defaultGuideRefreshTimes = new[] { "06:30" };
+        }
+
+        private async Task RemoveAllSensorsOnStartup()
+        {
+            var sensors = GetSensors();
+            var prefix = GetSensorPrefix();
+
+            _logger.LogDebug($"{sensors.Count} entities found with EnityId that starts with 'sensor.{prefix}_' for cleanup");
+
+            foreach (var sensor in sensors)
+            {
+                _logger.LogDebug($"Delete sensor: {sensor.EntityId}");
+                await _entityManager.RemoveAsync(sensor.EntityId).ConfigureAwait(false);
+            }
+        }
+
+        private async Task SetAvailabilityForAllSensorsToDown()
+        {
+            var sensors = GetSensors();
+
+            foreach(var sensor in sensors)
+            {
+                await _entityManager.SetAvailabilityAsync(sensor.EntityId, "down").ConfigureAwait(false);
+            }
+        }
+
+        private List<Entity> GetSensors()
+        {
+            var allEntities = _haContext.GetAllEntities();
+
+            var prefix = GetSensorPrefix();
+
+            return allEntities.Where(i => i.EntityId.StartsWith($"sensor.{prefix}_")).ToList();
+        }
+
+        private string GetSensorPrefix()
+        {
+            var prefix = "epg";
+
+            if (!string.IsNullOrEmpty(_config.Value.SensorPrefix))
+            {
+                prefix = _config.Value.SensorPrefix.ToSimple();
+            }
+
+            return prefix;
+        }
+
+        private void Exit()
+        {
+            _logger.LogInformation("Terminating application normaly.");
+            _liveTime.StopApplication();
         }
         #endregion
     }

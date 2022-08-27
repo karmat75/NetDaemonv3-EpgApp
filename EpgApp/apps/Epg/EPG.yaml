@@ -1,7 +1,10 @@
-﻿EPG.Models.Config:
-  RefreshrateInSeconds: 10
+﻿EpgApp.apps.Epg.Models.Config:
+  CleanupSensorsOnStartup: true
+  OnlyCleanupAndEnd: false
+  RefreshrateInSeconds: 60
+  SensorPrefix: "epg"
   Dataproviders:
-    - Fullname: "EpgApp.Services.HoerzuDataProviderService"
+    - Fullname: "EpgApp.apps.Epg.Services.HoerzuDataProviderService"
       Stations:
         - "Das Erste"
         - "ZDF"
@@ -23,3 +26,11 @@
         - "22:05"
         - "23:15"
         - "00:15"
+#    - Fullname: "EpgApp.apps.Epg.Services.OrfDataProviderService"
+#      Stations:
+#        - "ORF 1"
+#        - "ORF 2"
+#        - "ORF 3"
+#    - Fullname: "EpgApp.apps.Epg.Services.SampleDataProviderService"
+#      Stations:
+#        - "TV One"

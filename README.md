@@ -12,3 +12,6 @@
 1. Clone and open this repository in Visual Studio or Visual Studio Code
 2. Rename appsettings.example.json and edit for your needs (Sections: HomeAssistnat, Mqtt)
 3. Check ./apps/Epg/EPG.yaml and add or remove channels 
+
+# Sources
+- Hörzu (german) - supported channels you will find in [EpgApp/apps/Epg/Services/HoerzuStation.cs](/EpgApp/apps/Epg/Services/HoerzuStation.cs)

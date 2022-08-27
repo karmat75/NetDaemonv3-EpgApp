@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EpgApp.apps.Epg
+﻿namespace EpgApp.apps.Epg
 {
     public static class StringExtensions
     {

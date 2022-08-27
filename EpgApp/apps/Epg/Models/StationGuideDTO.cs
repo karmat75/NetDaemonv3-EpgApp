@@ -1,11 +1,7 @@
 ﻿using EpgApp.apps.Epg.Services;
 using NetDaemon.Extensions.MqttEntityManager;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reactive.Concurrency;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EpgApp.apps.Epg.Models
 {
@@ -19,5 +15,6 @@ namespace EpgApp.apps.Epg.Models
         public IEnumerable<string> GuideRefreshTimes { get; set; }
         public int RefreshrateInSeconds { get; set; }
         public IHaContext HomeAssistantContext { get; set; }
+        public IAppConfig<Config> Config { get; set; }
     }
 }
