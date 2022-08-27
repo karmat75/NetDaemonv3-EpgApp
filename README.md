@@ -1,14 +1,14 @@
-# Project template for binary deploy
-This is the project template for binary deploy. This allows you to build a binary package and deploy it to NetDaemon.  
+# Based on
+- [NetDaemon v3](https://github.com/net-daemon/netdaemon)
+- [mutzl/netdaemon-epg](https://github.com/mutzl/netdaemon-epg)
 
-## Getting started
-Please see [netdaemon.xyz](https://netdaemon.xyz/docs/v3) for more information about getting starting developing apps for Home Assistant using NetDaemon.
+# Requires
+- [Home Assistant](https://www.home-assistant.io/)
+- Mqtt Broker Addon for Home Assistant like Mosquitto broker 
+- NetDaemon V3 Addon for Home Assistant
+- NetDaemon V3 Integration (via HACS - Home Assistant Community Store)
 
-## Issues
-
-- If you have issues or suggestions of improvements to this template, please [add an issue](https://github.com/net-daemon/netdaemon-app-template)
-- If you have issues or suggestions of improvements to NetDaemon, please [add an issue](https://github.com/net-daemon/netdaemon/issues)
-
-## Discuss the NetDaemon
-
-Please [join the Discord server](https://discord.gg/K3xwfcX) to get support or if you want to contribute and help others.
+# Using
+1. Clone and open this repository in Visual Studio or Visual Studio Code
+2. Rename appsettings.example.json and edit for your needs (Sections: HomeAssistnat, Mqtt)
+3. Check ./apps/Epg/EPG.yaml and add or remove channels 
