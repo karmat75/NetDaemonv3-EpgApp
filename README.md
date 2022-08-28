@@ -11,12 +11,12 @@
 
 # Using
 1. Clone and open this repository in Visual Studio or Visual Studio Code
-2. Rename appsettings.example.json and edit for your needs (Sections: HomeAssistnat, Mqtt)
+2. Rename appsettings.example.json and edit for your needs (Sections: HomeAssistant, Mqtt)
 3. Check [EpgApp/apps/Epg/Epg.yaml](/EpgApp/apps/Epg/Epg.yaml) and add or remove channels 
 4. After start some sensors for choosen channels will be created in Home Assistant. You can search for in Settings/Devices & Services/Entities by the definied `SensorPrefix` in your [Epg.yaml](/EpgApp/apps/Epg/Epg.yaml) file.
 
 # Sources
-- Hörzu (german) - supported channels you will find in [EpgApp/apps/Epg/Services/HoerzuStation.cs](/EpgApp/apps/Epg/Services/HoerzuStation.cs)
+- HÃ¶rzu (german) - supported channels you will find in [EpgApp/apps/Epg/Services/HoerzuStation.cs](/EpgApp/apps/Epg/Services/HoerzuStation.cs)
 
 # Config YAML explained
 - `CleanupSensorsOnStartup` Boolean (true | false) - All sensors will be removed from Home Assistant on startup and recreated if it is needed. (usefull when channels will be changed)  
