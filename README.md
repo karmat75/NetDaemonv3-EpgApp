@@ -17,7 +17,7 @@
 5. Publish the code to your Home Assistant if all is fine for you. 
 
 # Sources
-- Hörzu (german) - supported channels you will find in [EpgApp/apps/Epg/Services/HoerzuStation.cs](/EpgApp/apps/Epg/Services/HoerzuStation.cs)
+- Hörzu (german) - supported channels are hardcoded in [EpgApp/apps/Epg/Services/HoerzuStation.cs](/EpgApp/apps/Epg/Services/HoerzuStation.cs)
 
 # Config YAML explained
 - `CleanupSensorsOnStartup` Boolean (true | false) - All sensors will be removed from Home Assistant on startup and recreated if it is needed. (usefull when channels will be changed)  
