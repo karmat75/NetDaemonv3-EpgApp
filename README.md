@@ -29,6 +29,7 @@
   - `RefreshTimes` String List - A List of "Time Stamps" for planned general refresh of the EPG data.
 
 # Hints
+## Disable recording
 It will be usefull when you exclude your epg sensors from recording.
 Add the following to your Home Assistant configuration.yaml:
 ```yaml
@@ -40,3 +41,101 @@ recorder:
 ...
 ```
 >Replace the prefix in **sensor.epg_*** with your value of `SensorPrefix`
+
+## Lovelace card - single channel
+![A Lovelace card which displays data for one channel](/Sample_SingleChannelCard.PNG)
+
+You can use your EPG data in a lovelace markdown card.
+Edit your dashboard and add an new card of type markdown. At the bottom of the card editor, click the button `SHOW CODE EDITOR` and past the following code.
+```yaml
+type: markdown
+content: |-
+  {% set entity_id = "sensor.epg_hoerzu_kabeleins" %}
+  {% set durationpercent = 3  %}
+  {% if states(entity_id) | int > durationpercent | int %}
+    {% set durationpercent = states(entity_id) | int * 0.9 %}
+  {% endif %}
+  <table width="100%">
+    <tr>
+      <td colspan="3">
+        <h3>{{ state_attr(entity_id, 'Station') }}</h3>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">
+        <strong>{{ state_attr(entity_id, 'Title') }}</strong>
+      </td>
+    </tr>
+    <tr>
+      <td width="35px">
+        <i>{{ state_attr(entity_id, 'Start') }}&nbsp;&nbsp;</i>
+      </td>
+      <td title="{{states(entity_id)}}%">
+        <img src="/local/images/cornflowerblue_pixel.PNG" width="4px" height="4px" /><img alt="{{durationpercent}}%" src="/local/images/cornflowerblue_pixel.PNG" width="{{states(entity_id)}}%" height="4px" />
+      </td>
+      <td width="35px">
+        <i>&nbsp;&nbsp;{{ state_attr(entity_id, 'End') }}</i>
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td colspan="2">
+        <small>{{ state_attr(entity_id, 'Upcoming') }}</small>
+      </td>
+    </tr>
+  </table>
+```
+>Replace in the first line under `content: |-` the value `sensor.epg_hoerzu_kabeleins` with an existing sensor name.
+
+## Lovelace card - all channels
+![A Lovelace card which displays data for multiple channels](/Sample_MultiChannelCard.PNG)
+
+You can use your EPG data in a lovelace markdown card.
+Edit your dashboard and add an new card of type markdown. At the bottom of the card editor, click the button `SHOW CODE EDITOR` and past the following code.
+```yaml
+type: markdown
+content: |-
+  {% set epg_prefix = "epg" %}
+  {% for state in states.sensor %}
+  {% if epg_prefix in state.entity_id %}
+  {% set entity_id = state.entity_id %}
+  {% set durationpercent = 3  %}
+  {% if states(entity_id) | int > durationpercent | int %}
+    {% set durationpercent = states(entity_id) | int * 0.9 %}
+  {% endif %}
+  <table width="100%">
+    <tr>
+      <td colspan="3">
+        <h3>{{ state_attr(entity_id, 'Station') }}</h3>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">
+        <strong>{{ state_attr(entity_id, 'Title') }}</strong>
+      </td>
+    </tr>
+    <tr>
+      <td width="35px">
+        <i>{{ state_attr(entity_id, 'Start') }}&nbsp;&nbsp;</i>
+      </td>
+      <td title="{{states(entity_id)}}%">
+        <img src="/local/images/cornflowerblue_pixel.PNG" width="4px" height="4px" /><img alt="{{durationpercent}}%" src="/local/images/cornflowerblue_pixel.PNG" width="{{states(entity_id)}}%" height="4px" />
+      </td>
+      <td width="35px">
+        <i>&nbsp;&nbsp;{{ state_attr(entity_id, 'End') }}</i>
+      </td>
+    </tr>
+    <tr>
+      <td></td>
+      <td colspan="2">
+        <small>{{ state_attr(entity_id, 'Upcoming') }}</small>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+  {% endfor %}
+```
+>Replace in the first line under `content: |-` the value `epg` with the defined prefix for your epg sensors.
+
+| :exclamation: Displaying many channels may result in a heavy load of your system and/or browser   |
+|---------------------------------------------------------------------------------------------------|
