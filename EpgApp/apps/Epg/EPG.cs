@@ -47,6 +47,12 @@ namespace EpgApp.apps.Epg
             SetRefreshrateInSeconds();
             InitialisedefaultGuideRefreshTimes();
 
+            if(_config.Value.PrintChannelsAndExit != null && _config.Value.PrintChannelsAndExit.Value)
+            {
+                PrintDataProviderChannelList();
+                Exit();
+            }
+
             if(_config.Value.CleanupSensorsOnStartup != null && _config.Value.CleanupSensorsOnStartup.Value)
             {
                 _logger.LogInformation("Sensor cleanup on start is enabled. All sensors will be removed and recreated if nessesary.");
@@ -216,6 +222,18 @@ namespace EpgApp.apps.Epg
             }
 
             return prefix;
+        }
+
+        private void PrintDataProviderChannelList()
+        {
+            var outputList = $"Channel List for Hoerzu data provider{Environment.NewLine}";
+            foreach(var channel in HoerzuStation.GetAll().Select(s => s.Name).OrderBy(o => o))
+            {
+                outputList += $"- \"{channel}\"{Environment.NewLine}";
+            }
+
+            _logger.LogInformation(outputList);
+            
         }
 
         private void Exit()

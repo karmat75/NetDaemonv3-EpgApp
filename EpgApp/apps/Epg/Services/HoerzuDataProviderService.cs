@@ -105,7 +105,11 @@ namespace EpgApp.apps.Epg.Services
             Show? lastShow = null;
             foreach (var show in shows)
             {
-                if (lastShow != null) lastShow.End = show.Start;
+                if (lastShow != null)
+                {
+                    lastShow.End = show.Start;
+                }
+
                 lastShow = show;
             }
         }

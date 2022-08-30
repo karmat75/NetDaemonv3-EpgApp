@@ -9,5 +9,6 @@ namespace EpgApp.apps.Epg.Models
         public bool? CleanupSensorsOnStartup { get; set; }
         public bool? OnlyCleanupAndEnd { get; set; }
         public string? SensorPrefix { get; set; } = "epg";
+        public bool? PrintChannelsAndExit { get; set; }
     }
 }

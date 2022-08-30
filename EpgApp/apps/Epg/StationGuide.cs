@@ -58,8 +58,6 @@ namespace EpgApp.apps.Epg
                 }
                 _= _scheduler.ScheduleCron($"{time[1]} {time[0]} * * *", async () => await RefreshGuideAsync());
             }
-
-            //_= _scheduler.Schedule(TimeSpan.FromSeconds(_refreshrateInSeconds), async () => await GetCurrentShowAndSetSensorAsync());
         }
 
         public async Task RefreshGuideAsync()
@@ -130,7 +128,8 @@ namespace EpgApp.apps.Epg
                     Station = _station,
                     Title = currentShow.Title,
                     Episode = currentShow.Episode,
-                    BeginTime = currentShow.Start.ToShortTimeString(),
+                    Start = currentShow.Start.ToShortTimeString(),
+                    End = (currentShow.End ?? currentShow.Start.AddMinutes(currentShow.DurationInMinutes ?? 0)).ToShortTimeString(),
                     Duration = currentShow.DurationInMinutes ?? 0,
                     Genre = currentShow.Category,
                     Upcoming = upcomingShow?.Title ?? string.Empty,
@@ -147,7 +146,7 @@ namespace EpgApp.apps.Epg
 
                 try
                 {
-                    if (sensorAttributes.BeginTime != null)
+                    if (sensorAttributes.Start != null)
                     {
                         _lastShow = currentShow;  // setting state and attribute went ok
                         _logger.LogDebug($@"{_dataProviderService.ProviderName} / {_station}: TV Show ""{state?.State}"" setting properties was successful");
