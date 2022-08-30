@@ -13,7 +13,8 @@
 1. Clone and open this repository in Visual Studio or Visual Studio Code
 2. Rename *appsettings.example.json* to *appsettings.json* and edit for your needs (Sections: HomeAssistant, Mqtt)
 3. Check [EpgApp/apps/Epg/Epg.yaml](/EpgApp/apps/Epg/Epg.yaml) and add or remove channels 
-4. After start some sensors for choosen channels will be created in Home Assistant. You can search for in Settings/Devices & Services/Entities by the definied `SensorPrefix` in your [Epg.yaml](/EpgApp/apps/Epg/Epg.yaml) file.
+4. Hit `F5` in Visual Studio to check the code. If all is fine, some sensors for choosen channels will be created in Home Assistant. You can search for in Settings/Devices & Services/Entities by the definied `SensorPrefix` in your [Epg.yaml](/EpgApp/apps/Epg/Epg.yaml) file.
+5. Publish the code to your Home Assistant if all is fine for you. 
 
 # Sources
 - Hörzu (german) - supported channels you will find in [EpgApp/apps/Epg/Services/HoerzuStation.cs](/EpgApp/apps/Epg/Services/HoerzuStation.cs)
