@@ -54,7 +54,7 @@ content: |-
   {% set entity_id = "sensor.epg_hoerzu_kabeleins" %}
   {% set durationpercent = 3  %}
   {% if states(entity_id) | int > durationpercent | int %}
-    {% set durationpercent = states(entity_id) | int * 0.9 %}
+    {% set durationpercent = (states(entity_id) | int * 0.9) | int %}
   {% endif %}
   <table width="100%">
     <tr>
@@ -72,7 +72,7 @@ content: |-
         <i>{{ state_attr(entity_id, 'Start') }}&nbsp;&nbsp;</i>
       </td>
       <td title="{{states(entity_id)}}%">
-        <img src="/local/images/cornflowerblue_pixel.PNG" width="4px" height="4px" /><img alt="{{durationpercent}}%" src="/local/images/cornflowerblue_pixel.PNG" width="{{states(entity_id)}}%" height="4px" />
+        <img src="/local/images/cornflowerblue_pixel.PNG" width="4px" height="4px" /><img alt="{{durationpercent}}%" src="/local/images/cornflowerblue_pixel.PNG" width="{{durationpercent}}%" height="4px" />
       </td>
       <td width="35px">
         <i>&nbsp;&nbsp;{{ state_attr(entity_id, 'End') }}</i>
@@ -81,7 +81,7 @@ content: |-
     <tr>
       <td></td>
       <td colspan="2">
-        <small>{{ state_attr(entity_id, 'Upcoming') }}</small>
+        <small>Danach: <i>{{ state_attr(entity_id, 'Upcoming') }}</i></small>
       </td>
     </tr>
   </table>
@@ -98,12 +98,12 @@ type: markdown
 content: |-
   {% set epg_prefix = "epg" %}
   {% for state in states.sensor %}
-  {% if epg_prefix in state.entity_id %}
-  {% set entity_id = state.entity_id %}
-  {% set durationpercent = 3  %}
-  {% if states(entity_id) | int > durationpercent | int %}
-    {% set durationpercent = states(entity_id) | int * 0.9 %}
-  {% endif %}
+    {% if epg_prefix in state.entity_id %}
+      {% set entity_id = state.entity_id %}
+      {% set durationpercent = 3  %}
+      {% if states(entity_id) | int > durationpercent | int %}
+        {% set durationpercent = states(entity_id) | int * 0.9 %}
+      {% endif %}
   <table width="100%">
     <tr>
       <td colspan="3">
@@ -120,7 +120,7 @@ content: |-
         <i>{{ state_attr(entity_id, 'Start') }}&nbsp;&nbsp;</i>
       </td>
       <td title="{{states(entity_id)}}%">
-        <img src="/local/images/cornflowerblue_pixel.PNG" width="4px" height="4px" /><img alt="{{durationpercent}}%" src="/local/images/cornflowerblue_pixel.PNG" width="{{states(entity_id)}}%" height="4px" />
+        <img src="/local/images/cornflowerblue_pixel.PNG" width="4px" height="4px" /><img src="/local/images/cornflowerblue_pixel.PNG" width="{{durationpercent}}%" height="4px" />
       </td>
       <td width="35px">
         <i>&nbsp;&nbsp;{{ state_attr(entity_id, 'End') }}</i>
@@ -129,11 +129,11 @@ content: |-
     <tr>
       <td></td>
       <td colspan="2">
-        <small>{{ state_attr(entity_id, 'Upcoming') }}</small>
+        <small>Danach: <i>{{ state_attr(entity_id, 'Upcoming') }}</i></small>
       </td>
     </tr>
   </table>
-  {% endif %}
+    {% endif %}
   {% endfor %}
 ```
 >Replace in the first line under `content: |-` the value `epg` with the defined prefix for your epg sensors.
